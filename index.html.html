@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protocolei</title>
+    <!-- Carrega o Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a biblioteca de ícones Heroicons -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/heroicons@2.1.3/24/outline/index.js"></script>
+    <style>
+        /* Fonte Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Esconde o input[type=file] padrão */
+        .file-input-hidden {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+        /* Animação do spinner */
+        .spinner {
+            border-top-color: transparent;
+            width: 16px;
+            height: 16px;
+            border-width: 2px;
+            border-style: solid;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        /* Transição suave para modais e abas */
+        .transition-all {
+            transition-property: all;
+            transition-duration: 300ms;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Container Principal -->
+    <div class="container mx-auto max-w-6xl p-4 md:p-8">
+
+        <!-- Cabeçalho e Navegação -->
+        <header class="mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-xl shadow-sm">
+                <h1 class="text-3xl font-bold text-green-700">Protocolei</h1>
+                <!-- Navegação por Abas -->
+                <nav class="mt-4 md:mt-0 flex space-x-2">
+                    <button id="nav-consultar" class="nav-button bg-green-600 text-white px-4 py-2 rounded-lg shadow-md font-medium">Consultar</button>
+                    <button id="nav-cadastrar" class="nav-button bg-white text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium">Cadastrar Novo</button>
+                    <button id="nav-pre-cadastro" class="nav-button bg-white text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium">Pré-Cadastro</button>
+                </nav>
+            </div>
+            <!-- Exibição do UserID para colaboração -->
+            <div class="mt-2 text-center md:text-right">
+                <span class="text-xs text-gray-500">Seu ID de usuário: <code id="user-id-display" class="font-mono bg-gray-200 px-1 rounded">Carregando...</code></span>
+            </div>
+        </header>
+
+        <!-- Seções de Conteúdo -->
+        <main>
+            <!-- 1. Seção de Consulta -->
+            <section id="section-consultar" class="app-section space-y-6">
+                <!-- Barra de Busca -->
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <label for="search" class="block text-sm font-medium text-gray-700">Buscar Protocolo</label>
+                    <input type="text" id="search" placeholder="Buscar por nº, nome ou cód. cliente..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                </div>
+
+                <!-- Lista de Protocolos -->
+                <div id="protocolos-loading" class="text-center py-10">
+                    <div class="spinner inline-block border-green-600"></div>
+                    <p class="mt-2 text-gray-600">Carregando protocolos...</p>
+                </div>
+                <div id="protocolos-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Cards de protocolo serão inseridos aqui pelo JS -->
+                </div>
+                <div id="protocolos-empty" class="hidden text-center py-10 bg-white rounded-xl shadow-sm">
+                    <p class="text-gray-600">Nenhum protocolo encontrado.</p>
+                </div>
+            </section>
+
+            <!-- 2. Seção de Cadastro -->
+            <section id="section-cadastrar" class="app-section hidden bg-white p-6 md:p-8 rounded-xl shadow-sm">
+                <h2 class="text-2xl font-semibold mb-6">Cadastrar Novo Protocolo</h2>
+                <form id="form-cadastrar" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <input-field label="Protocolo (alfanumérico)" id="cad-protocolo"></input-field>
+                        <input-field label="Código do Cliente" id="cad-cod-cliente"></input-field>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <input-field label="Nome" id="cad-nome"></input-field>
+                        <input-field label="Telefone" id="cad-telefone" type="tel"></input-field>
+                    </div>
+                    <input-field label="Serviço" id="cad-servico"></input-field>
+                    <textarea-field label="Resposta" id="cad-resposta"></textarea-field>
+                   
+                    <!-- Anexos -->
+                    <file-upload-area section-id="cad"></file-upload-area>
+
+                    <button-submit id="cad-submit" text="Salvar Protocolo"></button-submit>
+                </form>
+            </section>
+
+            <!-- 3. Seção de Pré-Cadastro -->
+            <section id="section-pre-cadastro" class="app-section hidden bg-white p-6 md:p-8 rounded-xl shadow-sm">
+                <h2 class="text-2xl font-semibold mb-6">Pré-Cadastro Rápido</h2>
+                <form id="form-pre-cadastro" class="space-y-6">
+                    <input-field label="Protocolo (alfanumérico)" id="pre-protocolo"></input-field>
+                    <input-field label="Cliente" id="pre-cliente"></input-field>
+                    <input-field label="Serviço" id="pre-servico"></input-field>
+                    <input-field label="Telefone" id="pre-telefone" type="tel"></input-field>
+                    <textarea-field label="Observação" id="pre-observacao"></textarea-field>
+
+                    <!-- Anexos -->
+                    <file-upload-area section-id="pre"></file-upload-area>
+
+                    <button-submit id="pre-submit" text="Salvar Pré-Cadastro"></button-submit>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modais -->
+
+    <!-- Modal: Detalhes do Protocolo -->
+    <div id="modal-detalhes" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden items-center justify-center p-4 transition-all">
+        <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl transform transition-all max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center p-6 border-b">
+                <h3 class="text-2xl font-semibold text-green-700">Detalhes do Protocolo</h3>
+                <button id="modal-detalhes-fechar" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="modal-detalhes-conteudo" class="p-6 space-y-4">
+                <!-- Conteúdo dos detalhes inserido pelo JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmação de Exclusão -->
+    <div id="modal-confirmar-excluir" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden items-center justify-center p-4 transition-all">
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl p-6">
+            <h3 class="text-xl font-semibold text-gray-900">Confirmar Exclusão</h3>
+            <p class="mt-2 text-gray-600">Você tem certeza que deseja excluir este protocolo? Esta ação não pode ser desfeita.</p>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="modal-excluir-cancelar" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">Cancelar</button>
+                <button id="modal-excluir-confirmar" class="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                    <span class="button-text">Confirmar Exclusão</span>
+                    <span class="button-spinner hidden spinner ml-2"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast: Notificação (Sucesso/Erro) -->
+    <div id="toast-notificacao" class="fixed bottom-5 right-5 z-50 w-full max-w-xs p-4 rounded-xl shadow-lg transform translate-x-[200%] transition-all">
+        <p id="toast-mensagem"></p>
+    </div>
+
+    <!-- Imports do Firebase -->
+    <script type="module">
+        // Importações modulares do Firebase v11+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import {
+            getAuth,
+            signInAnonymously,
+            signInWithCustomToken,
+            onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            doc,
+            deleteDoc,
+            onSnapshot,
+            query,
+            where,
+            getDocs,
+            Timestamp,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import {
+            getStorage,
+            ref,
+            uploadBytesResumable,
+            getDownloadURL,
+            deleteObject
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+        // --- Variáveis Globais de Configuração ---
+       
+        // SUA CONFIGURAÇÃO DO FIREBASE - ATUALIZADA
+        const firebaseConfig = {
+            apiKey: "AIzaSyA9husGNK3ddUwCdUuD9wlcWIp_95cu3Pc",
+            authDomain: "protocoleiprod.firebaseapp.com",
+            projectId: "protocoleiprod",
+            storageBucket: "protocoleiprod.firebasestorage.app",
+            messagingSenderId: "1094726094645",
+            appId: "1:1094726094645:web:c5bb160b49f4a14420067c",
+            measurementId: "G-DR6QQ2WJZY"
+        };
+
+        const appId = 'protocoleiprod';
+
+        // --- Inicialização do Firebase ---
+        let app, auth, db, storage;
+        let userId = null; // ID do usuário (autenticado)
+        let protocolosCollectionRef = null; // Referência da coleção principal
+       
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            storage = getStorage(app);
+            setLogLevel('Debug'); // Para debug no console
+        } catch (error) {
+            console.error("Falha ao inicializar o Firebase:", error);
+            // mostrarToast("Erro fatal ao conectar. Verifique o console.", 'erro'); // Removido para evitar erro se app não rodar localmente
+        }
+
+        // --- Estado da Aplicação ---
+        let todosProtocolos = []; // Cache local de todos os protocolos
+        let arquivosParaUpload = { cad: [], pre: [] }; // Arquivos selecionados nos formulários
+        let idParaExcluir = null; // Guarda o ID para o modal de exclusão
+        let anexosParaExcluir = []; // Guarda os anexos para o modal de exclusão
+
+        // --- Seletores de Elementos DOM ---
+        const navButtons = document.querySelectorAll('.nav-button');
+        const sections = document.querySelectorAll('.app-section');
+        const searchInput = document.getElementById('search');
+
+        // Listas
+        const listContainer = document.getElementById('protocolos-list');
+        const listLoading = document.getElementById('protocolos-loading');
+        const listEmpty = document.getElementById('protocolos-empty');
+
+        // Formulários
+        const formCadastrar = document.getElementById('form-cadastrar');
+        const formPreCadastro = document.getElementById('form-pre-cadastro');
+        const cadSubmitBtn = document.getElementById('cad-submit');
+        const preSubmitBtn = document.getElementById('pre-submit');
+       
+        // Modais
+        const modalDetalhes = document.getElementById('modal-detalhes');
+        const modalDetalhesConteudo = document.getElementById('modal-detalhes-conteudo');
+        const modalDetalhesFechar = document.getElementById('modal-detalhes-fechar');
+       
+        const modalConfirmarExcluir = document.getElementById('modal-confirmar-excluir');
+        const modalExcluirCancelar = document.getElementById('modal-excluir-cancelar');
+        const modalExcluirConfirmar = document.getElementById('modal-excluir-confirmar');
+       
+        // Toast
+        const toast = document.getElementById('toast-notificacao');
+        const toastMsg = document.getElementById('toast-mensagem');
+
+        // --- Web Components Customizados (para evitar repetição de HTML) ---
+
+        // Componente de Input
+        class InputField extends HTMLElement {
+            constructor() {
+                super();
+                const label = this.getAttribute('label') || '';
+                const id = this.getAttribute('id') || '';
+                const type = this.getAttribute('type') || 'text';
+                const required = this.hasAttribute('required');
+               
+                this.innerHTML = `
+                    <div>
+                        <label for="input-${id}" class="block text-sm font-medium text-gray-700">${label} ${required ? '<span class="text-red-500">*</span>' : ''}</label>
+                        <input type="${type}" id="input-${id}" name="${id}" ${required ? 'required' : ''} class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                    </div>
+                `;
+            }
+        }
+        customElements.define('input-field', InputField);
+
+        // Componente de Textarea
+        class TextareaField extends HTMLElement {
+            constructor() {
+                super();
+                const label = this.getAttribute('label') || '';
+                const id = this.getAttribute('id') || '';
+               
+                this.innerHTML = `
+                    <div>
+                        <label for="input-${id}" class="block text-sm font-medium text-gray-700">${label}</label>
+                        <textarea id="input-${id}" name="${id}" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm"></textarea>
+                    </div>
+                `;
+            }
+        }
+        customElements.define('textarea-field', TextareaField);
+
+        // Componente de Área de Upload de Arquivo
+        class FileUploadArea extends HTMLElement {
+            constructor() {
+                super();
+                const sectionId = this.getAttribute('section-id') || 'default';
+                this.innerHTML = `
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Anexos (PDF, PNG, JPEG)</label>
+                        <div id="dropzone-${sectionId}" class="mt-1 flex justify-center rounded-md border-2 border-dashed border-gray-300 px-6 pt-5 pb-6 hover:border-green-500 transition-all">
+                            <div class="space-y-1 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                </svg>
+                                <div class="flex text-sm text-gray-600">
+                                    <label for="file-upload-${sectionId}" class="relative cursor-pointer rounded-md bg-white font-medium text-green-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-green-500 focus-within:ring-offset-2 hover:text-green-500">
+                                        <span>Selecione os arquivos</span>
+                                        <input id="file-upload-${sectionId}" name="file-upload-${sectionId}" type="file" multiple class="file-input-hidden" data-section="${sectionId}">
+                                    </label>
+                                    <p class="pl-1">ou arraste e solte</p>
+                                </div>
+                                <p class="text-xs text-gray-500">PDF, PNG, JPEG</p>
+                            </div>
+                        </div>
+                        <!-- Lista de arquivos selecionados -->
+                        <div id="file-list-${sectionId}" class="mt-4 space-y-2"></div>
+                        <!-- Progresso do Upload -->
+                        <div id="upload-progress-container-${sectionId}" class="hidden mt-4">
+                            <div class="flex justify-between">
+                                <span class="text-sm font-medium text-gray-700">Fazendo upload...</span>
+                                <span id="upload-progress-text-${sectionId}" class="text-sm font-medium text-gray-700">0%</span>
+                            </div>
+                            <div class="mt-1 w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="upload-progress-bar-${sectionId}" class="bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        customElements.define('file-upload-area', FileUploadArea);
+       
+        // Componente de Botão de Envio
+        class ButtonSubmit extends HTMLElement {
+            constructor() {
+                super();
+                const id = this.getAttribute('id') || '';
+                const text = this.getAttribute('text') || 'Salvar';
+                this.innerHTML = `
+                    <button type="submit" id="${id}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 py-2 px-6 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full md:w-auto">
+                        <span class="button-text">${text}</span>
+                        <span class="button-spinner hidden spinner ml-2"></span>
+                    </button>
+                `;
+            }
+        }
+        customElements.define('button-submit', ButtonSubmit);
+
+
+        // --- Funções Principais ---
+
+        /**
+         * Autenticação e Inicialização
+         * Roda quando a página carrega.
+         */
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Usuário já está logado (sessão persistiu)
+                userId = user.uid;
+            } else {
+                // Tenta logar com token customizado ou anonimamente
+                try {
+                    const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (token) {
+                        const userCredential = await signInWithCustomToken(auth, token);
+                        userId = userCredential.user.uid;
+                    } else {
+                        const userCredential = await signInAnonymously(auth);
+                        userId = userCredential.user.uid;
+                    }
+                } catch (error) {
+                    console.error("Erro na autenticação:", error);
+                    mostrarToast("Falha na autenticação. Não é possível salvar dados.", 'erro');
+                }
+            }
+
+            // Se a autenticação foi bem-sucedida, inicializa o app
+            if (userId) {
+                console.log("Autenticado com User ID:", userId);
+                document.getElementById('user-id-display').textContent = userId;
+               
+                // Define a referência da coleção (IMPORTANTE: dados privados do usuário)
+                const collectionPath = `artifacts/${appId}/users/${userId}/protocolos`;
+                protocolosCollectionRef = collection(db, collectionPath);
+
+                // Inicia o app
+                iniciarApp();
+            }
+        });
+
+        /**
+         * Inicializa os listeners e busca dados
+         */
+        function iniciarApp() {
+            if (!protocolosCollectionRef) {
+                console.error("Coleção do Firestore não está pronta.");
+                return;
+            }
+
+            // Inicia o listener de navegação
+            setupNavegacao();
+
+            // Inicia listeners de formulários
+            setupFormularios();
+           
+            // Inicia listeners de arquivos
+            setupFileHandling('cad');
+            setupFileHandling('pre');
+
+            // Inicia listeners dos modais
+            setupModais();
+           
+            // Inicia listener da busca
+            searchInput.addEventListener('input', () => renderProtocolos(todosProtocolos));
+
+            // Busca os dados iniciais e fica ouvindo mudanças
+            onSnapshot(protocolosCollectionRef, (snapshot) => {
+                listLoading.style.display = 'none';
+                todosProtocolos = [];
+                snapshot.forEach(doc => {
+                    todosProtocolos.push({ id: doc.id, ...doc.data() });
+                });
+               
+                // Ordena por data de criação (mais novos primeiro)
+                todosProtocolos.sort((a, b) => {
+                    const timeA = a.createdAt?.seconds || 0;
+                    const timeB = b.createdAt?.seconds || 0;
+                    return timeB - timeA;
+                });
+
+                renderProtocolos(todosProtocolos);
+            }, (error) => {
+                console.error("Erro ao buscar protocolos:", error);
+                mostrarToast("Erro ao carregar protocolos.", 'erro');
+                listLoading.style.display = 'none';
+            });
+
+            // Executa a limpeza automática
+            limparProtocolosAntigos();
+        }
+
+        /**
+         * Configura a navegação por abas
+         * CORREÇÃO: Uso explícito de style.display para garantir visibilidade.
+         */
+        function setupNavegacao() {
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetSectionId = `section-${button.id.replace('nav-', '')}`; // e.g., "section-pre-cadastro"
+                   
+                    // Esconde todas as seções (e força display: none)
+                    sections.forEach(section => {
+                        section.classList.add('hidden');
+                        section.style.display = 'none'; // Segurança extra para garantir que esconda
+                    });
+                   
+                    // Remove estilo ativo de todos os botões
+                    navButtons.forEach(btn => {
+                        btn.classList.remove('bg-green-600', 'text-white', 'shadow-md');
+                        btn.classList.add('bg-white', 'text-gray-700', 'hover:bg-gray-50');
+                    });
+                   
+                    // Mostra a seção alvo (e força display: block)
+                    const targetSection = document.getElementById(targetSectionId);
+                    if (targetSection) {
+                        targetSection.classList.remove('hidden');
+                        targetSection.style.display = 'block'; // Força o display para 'block'
+                    }
+                   
+                    // Aplica estilo ativo no botão clicado
+                    button.classList.add('bg-green-600', 'text-white', 'shadow-md');
+                    button.classList.remove('bg-white', 'text-gray-700', 'hover:bg-gray-50');
+                });
+            });
+           
+            // Garante o estado inicial: apenas 'Consultar' visível e ativo
+            document.getElementById('section-cadastrar').style.display = 'none';
+            document.getElementById('section-pre-cadastro').style.display = 'none';
+            document.getElementById('section-consultar').style.display = 'block';
+        }
+       
+        /**
+         * Configura os formulários de cadastro e pré-cadastro
+         */
+        function setupFormularios() {
+            formCadastrar.addEventListener('submit', handleSalvarProtocolo);
+            formPreCadastro.addEventListener('submit', handleSalvarPreCadastro);
+        }
+
+        /**
+         * Lógica para salvar o protocolo completo
+         */
+        async function handleSalvarProtocolo(e) {
+            e.preventDefault();
+            const btn = cadSubmitBtn;
+            toggleBotaoLoading(btn, true);
+
+            try {
+                // 1. Faz upload dos arquivos
+                const anexos = await uploadArquivos('cad');
+               
+                // 2. Prepara o objeto de dados
+                // Usando os IDs com prefixo 'input-'
+                const novoProtocolo = {
+                    protocolo: document.getElementById('input-cad-protocolo').value,
+                    codCliente: document.getElementById('input-cad-cod-cliente').value,
+                    nome: document.getElementById('input-cad-nome').value,
+                    telefone: document.getElementById('input-cad-telefone').value,
+                    servico: document.getElementById('input-cad-servico').value,
+                    resposta: document.getElementById('input-cad-resposta').value,
+                    observacao: "", // Campo do pré-cadastro
+                    dataServico: "", // Campo do pré-cadastro
+                    status: 'completo',
+                    anexos: anexos, // Array de { nome, url }
+                    createdAt: Timestamp.now()
+                };
+
+                // 3. Salva no Firestore
+                await addDoc(protocolosCollectionRef, novoProtocolo);
+
+                // 4. Limpa e dá feedback
+                mostrarToast("Protocolo salvo com sucesso!", 'sucesso');
+                formCadastrar.reset();
+                limparListaArquivos('cad');
+                document.getElementById('nav-consultar').click(); // Volta para a consulta
+
+            } catch (error) {
+                console.error("Erro ao salvar protocolo:", error);
+                mostrarToast("Erro ao salvar protocolo. Tente novamente.", 'erro');
+            } finally {
+                toggleBotaoLoading(btn, false);
+            }
+        }
+       
+        /**
+         * Lógica para salvar o pré-cadastro
+         */
+        async function handleSalvarPreCadastro(e) {
+            e.preventDefault();
+            const btn = preSubmitBtn;
+            toggleBotaoLoading(btn, true);
+
+            try {
+                // 1. Faz upload dos arquivos
+                const anexos = await uploadArquivos('pre');
+               
+                // 2. Prepara o objeto de dados
+                // Usando os IDs com prefixo 'input-'
+                const novoProtocolo = {
+                    protocolo: document.getElementById('input-pre-protocolo').value,
+                    codCliente: "", // Não tem no pré-cadastro
+                    nome: document.getElementById('input-pre-cliente').value, // Nome do cliente
+                    telefone: document.getElementById('input-pre-telefone').value,
+                    servico: document.getElementById('input-pre-servico').value,
+                    resposta: "",
+                    observacao: document.getElementById('input-pre-observacao').value,
+                    dataServico: "", // Não tem mais no pré-cadastro
+                    status: 'pre-cadastro',
+                    anexos: anexos,
+                    createdAt: Timestamp.now()
+                };
+
+                // 3. Salva no Firestore
+                await addDoc(protocolosCollectionRef, novoProtocolo);
+
+                // 4. Limpa e dá feedback
+                mostrarToast("Pré-cadastro salvo com sucesso!", 'sucesso');
+                formPreCadastro.reset();
+                limparListaArquivos('pre');
+                document.getElementById('nav-consultar').click(); // Volta para a consulta
+
+            } catch (error) {
+                console.error("Erro ao salvar pré-cadastro:", error);
+                mostrarToast("Erro ao salvar pré-cadastro. Tente novamente.", 'erro');
+            } finally {
+                toggleBotaoLoading(btn, false);
+            }
+        }
+
+        /**
+         * Renderiza a lista de protocolos na tela
+         */
+        function renderProtocolos(lista) {
+            listContainer.innerHTML = ''; // Limpa a lista
+            const termoBusca = searchInput.value.toLowerCase().trim();
+
+            const protocolosFiltrados = lista.filter(p => {
+                return (
+                    (p.protocolo || '').toLowerCase().includes(termoBusca) ||
+                    (p.nome || '').toLowerCase().includes(termoBusca) ||
+                    (p.codCliente || '').toLowerCase().includes(termoBusca)
+                );
+            });
+
+            if (protocolosFiltrados.length === 0) {
+                listEmpty.style.display = 'block';
+            } else {
+                listEmpty.style.display = 'none';
+                protocolosFiltrados.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer';
+                   
+                    const dataFormatada = p.createdAt?.toDate() ? p.createdAt.toDate().toLocaleDateString('pt-BR') : 'Sem data';
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="px-2 py-0.5 rounded-full text-xs font-medium ${p.status === 'completo' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${p.status === 'completo' ? 'Completo' : 'Pré-Cadastro'}
+                                </span>
+                                <h4 class="text-xl font-semibold text-gray-800 mt-2">${p.protocolo || 'S/ Protocolo'}</h4>
+                            </div>
+                            <button data-id="${p.id}" class="btn-excluir text-gray-400 hover:text-red-600 p-1 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.022 0A48.108 48.108 0 0 1 7.8 5.393m7.4 0-1.091 1.091a2.25 2.25 0 0 1-3.182 0L7.8 5.393m7.4 0a.75.75 0 0 1 .75.75v.207a.75.75 0 0 1-.75.75H7.05a.75.75 0 0 1-.75-.75V6.143a.75.75 0 0 1 .75-.75h9.9m-9.9 0h9.9" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-gray-600 mt-2"><b>Cliente:</b> ${p.nome || 'Não informado'}</p>
+                        <p class="text-gray-600"><b>Serviço:</b> ${p.servico || 'Não informado'}</p>
+                        <p class="text-sm text-gray-400 mt-3"><b>Data:</b> ${dataFormatada}</p>
+                    `;
+                   
+                    // Event listener para abrir detalhes
+                    card.addEventListener('click', (e) => {
+                        if (e.target.closest('.btn-excluir')) return; // Não abre modal se clicou em excluir
+                        abrirModalDetalhes(p);
+                    });
+
+                    // Event listener para excluir
+                    card.querySelector('.btn-excluir').addEventListener('click', (e) => {
+                        e.stopPropagation(); // Impede o card de abrir o modal
+                        abrirModalConfirmacao(p.id, p.anexos);
+                    });
+
+                    listContainer.appendChild(card);
+                });
+            }
+        }
+       
+        /**
+         * Lógica de limpeza automática
+         */
+        async function limparProtocolosAntigos() {
+            if (!protocolosCollectionRef) return;
+           
+            try {
+                // Calcula a data de 20 dias atrás
+                const dataLimite = new Date();
+                dataLimite.setDate(dataLimite.getDate() - 20);
+                const timestampLimite = Timestamp.fromDate(dataLimite);
+               
+                // Cria a query
+                const q = query(protocolosCollectionRef, where("createdAt", "<=", timestampLimite));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    console.log("Limpeza automática: Nenhum protocolo antigo encontrado.");
+                    return;
+                }
+
+                console.log(`Limpeza automática: ${querySnapshot.size} protocolo(s) antigo(s) encontrado(s).`);
+
+                // Deleta os documentos e arquivos associados
+                const promessasExclusao = [];
+                querySnapshot.forEach((docSnap) => {
+                    const protocolo = docSnap.data();
+                    const id = docSnap.id;
+                   
+                    // Adiciona promessa de exclusão do documento
+                    promessasExclusao.push(deleteDoc(doc(db, protocolosCollectionRef.path, id)));
+                   
+                    // Adiciona promessas de exclusão dos arquivos
+                    if (protocolo.anexos && protocolo.anexos.length > 0) {
+                        protocolo.anexos.forEach(anexo => {
+                            try {
+                                const fileRef = ref(storage, anexo.url); // A URL contém o caminho completo
+                                promessasExclusao.push(deleteObject(fileRef));
+                            } catch (storageError) {
+                                // Não para o processo se um arquivo falhar (pode já ter sido excluído)
+                                console.warn(`Falha ao excluir anexo (pode já ter sido removido): ${anexo.url}`, storageError);
+                            }
+                        });
+                    }
+                });
+
+                await Promise.all(promessasExclusao);
+                mostrarToast(`${querySnapshot.size} protocolo(s) antigo(s) foram excluídos.`, 'sucesso');
+
+            } catch (error) {
+                console.error("Erro na limpeza automática:", error);
+                mostrarToast("Erro ao tentar limpar protocolos antigos.", 'erro');
+            }
+        }
+       
+        // --- Funções de Upload de Arquivos ---
+       
+        /**
+         * Configura a área de drag-and-drop e seleção de arquivos
+         */
+        function setupFileHandling(sectionId) {
+            const dropzone = document.getElementById(`dropzone-${sectionId}`);
+            const fileInput = document.getElementById(`file-upload-${sectionId}`);
+           
+            // Previne comportamentos padrão
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            // Destaca a área ao arrastar
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, () => dropzone.classList.add('border-green-500'), false);
+            });
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, () => dropzone.classList.remove('border-green-500'), false);
+            });
+
+            // Handle drop
+            dropzone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files, sectionId);
+            }, false);
+           
+            // Handle seleção via clique
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files, sectionId);
+            });
+        }
+       
+        /**
+         * Adiciona arquivos à lista de upload e atualiza a UI
+         */
+        function handleFiles(files, sectionId) {
+            const fileList = Array.from(files);
+            arquivosParaUpload[sectionId] = [...arquivosParaUpload[sectionId], ...fileList];
+            renderListaArquivos(sectionId);
+        }
+       
+        /**
+         * Mostra os arquivos selecionados na UI
+         */
+        function renderListaArquivos(sectionId) {
+            const listContainer = document.getElementById(`file-list-${sectionId}`);
+            listContainer.innerHTML = '';
+           
+            arquivosParaUpload[sectionId].forEach((file, index) => {
+                const fileElement = document.createElement('div');
+                fileElement.className = 'flex items-center justify-between bg-gray-100 p-2 rounded-lg';
+                fileElement.innerHTML = `
+                    <span class="text-sm font-medium text-gray-700 truncate max-w-[80%]">${file.name}</span>
+                    <button type="button" data-index="${index}" data-section="${sectionId}" class="btn-remover-arquivo text-gray-400 hover:text-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                `;
+                listContainer.appendChild(fileElement);
+            });
+
+            // Adiciona listener para botões de remover
+            listContainer.querySelectorAll('.btn-remover-arquivo').forEach(button => {
+                button.addEventListener('click', () => {
+                    const index = parseInt(button.dataset.index);
+                    const section = button.dataset.section;
+                    arquivosParaUpload[section].splice(index, 1); // Remove do array
+                    renderListaArquivos(section); // Re-renderiza a lista
+                });
+            });
+        }
+       
+        /**
+         * Limpa a lista de arquivos (usado após o submit)
+         */
+        function limparListaArquivos(sectionId) {
+            arquivosParaUpload[sectionId] = [];
+            renderListaArquivos(sectionId);
+            document.getElementById(`upload-progress-container-${sectionId}`).classList.add('hidden');
+        }
+
+        /**
+         * Faz o upload dos arquivos para o Firebase Storage
+         */
+        async function uploadArquivos(sectionId) {
+            const files = arquivosParaUpload[sectionId];
+            if (files.length === 0) return []; // Nenhum arquivo para upload
+
+            const progressContainer = document.getElementById(`upload-progress-container-${sectionId}`);
+            const progressBar = document.getElementById(`upload-progress-bar-${sectionId}`);
+            const progressText = document.getElementById(`upload-progress-text-${sectionId}`);
+           
+            progressContainer.classList.remove('hidden');
+           
+            const uploadPromises = files.map(file => {
+                return new Promise((resolve, reject) => {
+                    // Cria um caminho único para o arquivo
+                    const filePath = `artifacts/${appId}/users/${userId}/protocolos-anexos/${Date.now()}-${file.name}`;
+                    const storageRef = ref(storage, filePath);
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            // Atualiza o progresso (aqui estamos mostrando o progresso do último, mas para múltiplos poderia ser uma média)
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            progressBar.style.width = `${progress}%`;
+                            progressText.textContent = `${Math.round(progress)}%`;
+                        },
+                        (error) => {
+                            console.error("Erro no upload:", error);
+                            reject(error);
+                        },
+                        async () => {
+                            // Upload concluído
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            resolve({ nome: file.name, url: downloadURL });
+                        }
+                    );
+                });
+            });
+
+            const resultados = await Promise.all(uploadPromises);
+            progressContainer.classList.add('hidden');
+            return resultados; // Retorna array de {nome, url}
+        }
+
+
+        // --- Funções de Modais e UI Auxiliar ---
+       
+        /**
+         * Configura os listeners dos modais
+         */
+        function setupModais() {
+            // Modal de Detalhes
+            modalDetalhesFechar.addEventListener('click', fecharModalDetalhes);
+            modalDetalhes.addEventListener('click', (e) => {
+                if (e.target === modalDetalhes) fecharModalDetalhes(); // Fecha ao clicar fora
+            });
+
+            // Modal de Exclusão
+            modalExcluirCancelar.addEventListener('click', fecharModalConfirmacao);
+            modalExcluirConfirmar.addEventListener('click', confirmarExclusao);
+            modalConfirmarExcluir.addEventListener('click', (e) => {
+                if (e.target === modalConfirmarExcluir) fecharModalConfirmacao(); // Fechar ao clicar fora
+            });
+        }
+       
+        /**
+         * Abre o modal de detalhes com os dados do protocolo
+         */
+        function abrirModalDetalhes(protocolo) {
+            let anexosHtml = '<p class="text-gray-500">Nenhum anexo.</p>';
+            if (protocolo.anexos && protocolo.anexos.length > 0) {
+                anexosHtml = protocolo.anexos.map(anexo => `
+                    <a href="${anexo.url}" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2 text-green-600 hover:text-green-800 hover:underline">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 flex-shrink-0">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94a3 3 0 1 1 4.243 4.243l-8.48 8.48a1.5 1.5 0 0 1-2.12-2.12l6.36-6.36" />
+                        </svg>
+                        <span class="truncate">${anexo.nome}</span>
+                    </a>
+                `).join('');
+            }
+           
+            // Note: O campo dataServico foi removido, mas mantemos o fallback:
+            const dataServicoFormatada = 'N/A';
+           
+            modalDetalhesConteudo.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <info-item label="Protocolo" value="${protocolo.protocolo || 'N/A'}"></info-item>
+                    <info-item label="Cód. Cliente" value="${protocolo.codCliente || 'N/A'}"></info-item>
+                    <info-item label="Nome" value="${protocolo.nome || 'N/A'}"></info-item>
+                    <info-item label="Telefone" value="${protocolo.telefone || 'N/A'}"></info-item>
+                    <info-item label="Serviço" value="${protocolo.servico || 'N/A'}"></info-item>
+                    <info-item label="Data do Serviço" value="${dataServicoFormatada}"></info-item>
+                </div>
+                <div class="mt-4">
+                    <info-item-block label="Resposta" value="${protocolo.resposta || 'N/A'}"></info-item-block>
+                </div>
+                <div class="mt-4">
+                    <info-item-block label="Observação" value="${protocolo.observacao || 'N/A'}"></info-item-block>
+                </div>
+                <div class="mt-6">
+                    <h5 class="text-sm font-semibold text-gray-700 mb-2">Anexos</h5>
+                    <div class="space-y-2">${anexosHtml}</div>
+                </div>
+            `;
+            modalDetalhes.classList.remove('hidden');
+            modalDetalhes.classList.add('flex');
+        }
+
+        function fecharModalDetalhes() {
+            modalDetalhes.classList.add('hidden');
+            modalDetalhes.classList.remove('flex');
+            modalDetalhesConteudo.innerHTML = ''; // Limpa o conteúdo
+        }
+       
+        /**
+         * Abre o modal de confirmação de exclusão
+         */
+        function abrirModalConfirmacao(id, anexos) {
+            idParaExcluir = id;
+            anexosParaExcluir = anexos || [];
+            modalConfirmarExcluir.classList.remove('hidden');
+            modalConfirmarExcluir.classList.add('flex');
+        }
+       
+        function fecharModalConfirmacao() {
+            idParaExcluir = null;
+            anexosParaExcluir = [];
+            modalConfirmarExcluir.classList.add('hidden');
+            modalConfirmarExcluir.classList.remove('flex');
+        }
+
+        /**
+         * Executa a exclusão após confirmação
+         */
+        async function confirmarExclusao() {
+            if (!idParaExcluir) return;
+           
+            const btn = modalExcluirConfirmar;
+            toggleBotaoLoading(btn, true);
+
+            try {
+                // 1. Excluir anexos do Storage
+                const promessasArquivos = anexosParaExcluir.map(anexo => {
+                    try {
+                        const fileRef = ref(storage, anexo.url); // A URL de download é a referência
+                        return deleteObject(fileRef);
+                    } catch (storageError) {
+                        console.warn("Erro ao excluir anexo (pode já ter sido removido):", anexo.url, storageError);
+                        return Promise.resolve(); // Continua mesmo se um arquivo falhar
+                    }
+                });
+               
+                await Promise.all(promessasArquivos);
+               
+                // 2. Excluir documento do Firestore
+                const docRef = doc(db, protocolosCollectionRef.path, idParaExcluir);
+                await deleteDoc(docRef);
+
+                mostrarToast("Protocolo excluído com sucesso!", 'sucesso');
+               
+            } catch (error) {
+                console.error("Erro ao excluir protocolo:", error);
+                mostrarToast("Erro ao excluir protocolo.", 'erro');
+            } finally {
+                toggleBotaoLoading(btn, false);
+                fecharModalConfirmacao();
+            }
+        }
+
+        /**
+         * Mostra uma notificação (toast)
+         */
+        function mostrarToast(mensagem, tipo = 'sucesso') {
+            toastMsg.textContent = mensagem;
+           
+            // Remove classes antigas
+            toast.classList.remove('bg-green-600', 'bg-red-600', 'text-white', 'translate-x-[200%]', 'translate-x-0');
+
+            if (tipo === 'sucesso') {
+                toast.classList.add('bg-green-600', 'text-white');
+            } else {
+                toast.classList.add('bg-red-600', 'text-white');
+            }
+           
+            // Animação de entrada
+            toast.classList.remove('translate-x-[200%]');
+            toast.classList.add('translate-x-0');
+
+            // Esconde após 3 segundos
+            setTimeout(() => {
+                toast.classList.remove('translate-x-0');
+                toast.classList.add('translate-x-[200%]');
+            }, 3000);
+        }
+       
+        /**
+         * Alterna o estado de loading de um botão
+         */
+        function toggleBotaoLoading(button, isLoading) {
+            const text = button.querySelector('.button-text');
+            const spinner = button.querySelector('.button-spinner');
+           
+            // Adiciona verificações para evitar erro se 'text' or 'spinner' forem null
+            if (isLoading) {
+                button.disabled = true;
+                if (text) text.classList.add('hidden');
+                if (spinner) spinner.classList.remove('hidden');
+            } else {
+                button.disabled = false;
+                if (text) text.classList.remove('hidden');
+                if (spinner) spinner.classList.add('hidden');
+            }
+        }
+
+        // --- Web Components para o Modal de Detalhes ---
+        class InfoItem extends HTMLElement {
+            constructor() {
+                super();
+                const label = this.getAttribute('label') || '';
+                const value = this.getAttribute('value') || 'N/A';
+                this.innerHTML = `
+                    <div>
+                        <span class="block text-sm font-medium text-gray-500">${label}</span>
+                        <span class="block text-lg font-medium text-gray-800">${value}</span>
+                    </div>
+                `;
+            }
+        }
+        customElements.define('info-item', InfoItem);
+       
+        class InfoItemBlock extends HTMLElement {
+            constructor() {
+                super();
+                const label = this.getAttribute('label') || '';
+                const value = this.getAttribute('value') || 'N/A';
+                this.innerHTML = `
+                    <div>
+                        <span class="block text-sm font-medium text-gray-500">${label}</span>
+                        <p class="block text-base text-gray-800 bg-gray-50 p-3 rounded-md mt-1 whitespace-pre-wrap">${value}</p>
+                    </div>
+                `;
+            }
+        }
+        customElements.define('info-item-block', InfoItemBlock);
+
+    </script>
+</body>
+</html>
